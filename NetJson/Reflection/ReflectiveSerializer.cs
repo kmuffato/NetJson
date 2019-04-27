@@ -1,4 +1,4 @@
-﻿/*
+/*
     +==========================================+
     +              NetJson v1.0                +
     +           by jonasfx21 @ GitHub          +
@@ -30,14 +30,18 @@ namespace NetJson.Reflection
         /// <param name="Key">The key name.</param>
         /// <param name="Value">The value.</param>
         /// <returns></returns>
-        public static object WrapValue(string Key, object Value)
+        public static object WrapValue(string Key, object Value, Type FieldType)
         {
             // Prevent null-reference exceptions
             if (Value == null)
                 return null;
 
+            // Field is enum
+            else if (FieldType.IsEnum)
+                return Enum.GetName(FieldType, Value);
+
             // Is a primitive
-            if (ReflectiveFiller.IsPrimitive(Value.GetType()))
+            else if (ReflectiveFiller.IsPrimitive(Value.GetType()))
                 return Value;
             // Is a container
             // Is an array
@@ -47,7 +51,10 @@ namespace NetJson.Reflection
                 int Index = 0;
                 foreach (var Item in (Array)Value)
                 {
-                    Array.Add(WrapValue(Key + "[" + Index.ToString() + "]", Item));
+                    Type ItemType = null;
+                    if (Item != null)
+                        ItemType = Item.GetType();
+                    Array.Add(WrapValue(Key + "[" + Index.ToString() + "]", Item, ItemType));
                     Index++;
                 }
                 return Array;
@@ -60,7 +67,10 @@ namespace NetJson.Reflection
                 int Index = 0;
                 foreach (var Item in Container)
                 {
-                    Array.Add(WrapValue(Key + "[" + Index.ToString() + "]", Item));
+                    Type ItemType = null;
+                    if (Item != null)
+                        ItemType = Item.GetType();
+                    Array.Add(WrapValue(Key + "[" + Index.ToString() + "]", Item, ItemType));
                     Index++;
                 }
                 return Array;
@@ -103,8 +113,8 @@ namespace NetJson.Reflection
                 // Check if a custom name was set and if the key exists
                 if (Key == "")
                     Key = Field.Name;
-
-                Object[Key] = WrapValue(Key, Field.GetValue(Instance));
+                
+                Object[Key] = WrapValue(Key, Field.GetValue(Instance), Field.FieldType);
             }
             return Object;
         }
