@@ -1,4 +1,4 @@
-﻿/*
+/*
     +==========================================+
     +              NetJson v1.0                +
     +           by jonasfx21 @ GitHub          +
@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace NetJson.Reflection
 {
@@ -52,6 +53,16 @@ namespace NetJson.Reflection
                 if (IsPrimitive(FieldType))
                     throw new FieldTypeException(Key, FieldType, typeof(Object), "Type mismatch on '" + Key + "'.");
                 return null;
+            }
+
+            // Field is enum
+            else if (FieldType.IsEnum)
+            {
+                if (Value == null)
+                    return null;
+                if (!(Value is string))
+                    throw new FieldTypeException(Key, FieldType, typeof(Object), "Type mismatch on '" + Key + "'.");
+                return Enum.Parse(FieldType, (string)Value);
             }
 
             // Primitives
@@ -158,7 +169,7 @@ namespace NetJson.Reflection
         /// <returns></returns>
         public static object FillObject(Type T, JsonObject Object)
         {
-            var Instance = Activator.CreateInstance(T);
+            var Instance = FormatterServices.GetSafeUninitializedObject(T);
             foreach (var Field in T.GetFields())
             {
                 // Check if the field is a JSON-field
